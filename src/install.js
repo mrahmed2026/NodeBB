@@ -48,136 +48,134 @@ questions.optional = [
 ];
 
 function checkSetupFlagEnv() {
-    let setupVal = install.values;
-    const envConfMap = getEnvConfMap();
+	let setupVal = install.values;
+	const envConfMap = getEnvConfMap();
+	if (hasRelevantEnvVars(envConfMap)) {
+		winston.info('[install/checkSetupFlagEnv] checking env vars for setup info...');
+		setupVal = setUpValuesFromEnv(setupVal, envConfMap);
+	}
+	setupVal = getSetupValuesFromJson(setupVal);
 
-    if (hasRelevantEnvVars(envConfMap)) {
-        winston.info('[install/checkSetupFlagEnv] checking env vars for setup info...');
-        setupVal = setUpValuesFromEnv(setupVal, envConfMap);
-    }
-
-    setupVal = getSetupValuesFromJson(setupVal);
-
-    if (setupVal && typeof setupVal === 'object') {
-        validateSetupValues(setupVal);
-    } else if (nconf.get('database')) {
-        setDatabaseValues();
-    }
+	if (setupVal && typeof setupVal === 'object') {
+		validateSetupValues(setupVal);
+	} else if (nconf.get('database')) {
+		setDatabaseValues();
+	}
 }
 
 function getEnvConfMap() {
-    return {
-        CONFIG: 'config',
-        NODEBB_CONFIG: 'config',
-        NODEBB_URL: 'url',
-        NODEBB_PORT: 'port',
-        NODEBB_ADMIN_USERNAME: 'admin:username',
-        NODEBB_ADMIN_PASSWORD: 'admin:password',
-        NODEBB_ADMIN_EMAIL: 'admin:email',
-        NODEBB_DB: 'database',
-        NODEBB_DB_HOST: 'host',
-        NODEBB_DB_PORT: 'port',
-        NODEBB_DB_USER: 'username',
-        NODEBB_DB_PASSWORD: 'password',
-        NODEBB_DB_NAME: 'database',
-        NODEBB_DB_SSL: 'ssl',
-    };
+	return {
+		CONFIG: 'config',
+		NODEBB_CONFIG: 'config',
+		NODEBB_URL: 'url',
+		NODEBB_PORT: 'port',
+		NODEBB_ADMIN_USERNAME: 'admin:username',
+		NODEBB_ADMIN_PASSWORD: 'admin:password',
+		NODEBB_ADMIN_EMAIL: 'admin:email',
+		NODEBB_DB: 'database',
+		NODEBB_DB_HOST: 'host',
+		NODEBB_DB_PORT: 'port',
+		NODEBB_DB_USER: 'username',
+		NODEBB_DB_PASSWORD: 'password',
+		NODEBB_DB_NAME: 'database',
+		NODEBB_DB_SSL: 'ssl',
+	};
 }
 
 function hasRelevantEnvVars(envConfMap) {
-    const envKeys = Object.keys(process.env);
-    return Object.keys(envConfMap).some(key => envKeys.includes(key));
+	const envKeys = Object.keys(process.env);
+	return Object.keys(envConfMap).some(key => envKeys.includes(key));
 }
 
 function setUpValuesFromEnv(setupVal, envConfMap) {
-    setupVal = setupVal || {};
-    Object.entries(process.env).forEach(([evName, evValue]) => {
-        if (evName.startsWith('NODEBB_DB_')) {
-            setupVal[`${process.env.NODEBB_DB}:${envConfMap[evName]}`] = evValue;
-        } else if (evName.startsWith('NODEBB_')) {
-            setupVal[envConfMap[evName]] = evValue;
-        }
-    });
-    setupVal['admin:password:confirm'] = setupVal['admin:password'];
-    return setupVal;
+	setupVal = setupVal || {};
+	Object.entries(process.env).forEach(([evName, evValue]) => {
+		if (evName.startsWith('NODEBB_DB_')) {
+			setupVal[`${process.env.NODEBB_DB}:${envConfMap[evName]}`] = evValue;
+		} else if (evName.startsWith('NODEBB_')) {
+			setupVal[envConfMap[evName]] = evValue;
+		}
+	});
+	setupVal['admin:password:confirm'] = setupVal['admin:password'];
+	return setupVal;
 }
 
 function getSetupValuesFromJson(setupVal) {
-    try {
-        if (nconf.get('setup')) {
-            const setupJSON = JSON.parse(nconf.get('setup'));
-            return { ...setupVal, ...setupJSON };
-        }
-    } catch (err) {
-        winston.error('[install/checkSetupFlagEnv] invalid json in nconf.get(\'setup\'), ignoring setup values from json');
-    }
-    return setupVal;
+	try {
+		if (nconf.get('setup')) {
+			const setupJSON = JSON.parse(nconf.get('setup'));
+			return { ...setupVal, ...setupJSON };
+		}
+	} catch (err) {
+		winston.error('[install/checkSetupFlagEnv] invalid json in nconf.get(\'setup\'), ignoring setup values from json');
+	}
+	return setupVal;
 }
 
 function validateSetupValues(setupVal) {
-    if (setupVal['admin:username'] && setupVal['admin:password'] && setupVal['admin:password:confirm'] && setupVal['admin:email']) {
-        install.values = setupVal;
-    } else {
-        winston.error('[install/checkSetupFlagEnv] required values are missing for automated setup:');
-        logMissingSetupValues(setupVal);
-        process.exit();
-    }
+	if (setupVal['admin:username'] && setupVal['admin:password'] && setupVal['admin:password:confirm'] && setupVal['admin:email']) {
+		install.values = setupVal;
+	} else {
+		winston.error('[install/checkSetupFlagEnv] required values are missing for automated setup:');
+		logMissingSetupValues(setupVal);
+		process.exit();
+	}
 }
 
 function logMissingSetupValues(setupVal) {
-    if (!setupVal['admin:username']) winston.error('  admin:username');
-    if (!setupVal['admin:password']) winston.error('  admin:password');
-    if (!setupVal['admin:password:confirm']) winston.error('  admin:password:confirm');
-    if (!setupVal['admin:email']) winston.error('  admin:email');
+	if (!setupVal['admin:username']) winston.error('  admin:username');
+	if (!setupVal['admin:password']) winston.error('  admin:password');
+	if (!setupVal['admin:password:confirm']) winston.error('  admin:password:confirm');
+	if (!setupVal['admin:email']) winston.error('  admin:email');
 }
 
 function setDatabaseValues() {
-    install.values = install.values || {};
-    install.values.database = nconf.get('database');
+	install.values = install.values || {};
+	install.values.database = nconf.get('database');
 }
 
 // GPT assisted code
 function checkCIFlag() {
-    let ciVals = getCIVals();
-    
-    if (isValidCIVals(ciVals)) {
-        install.ciVals = ciVals;
-    } else {
-        handleMissingCIValues(ciVals);
-    }
+	const ciVals = getCIVals();
+
+	if (isValidCIVals(ciVals)) {
+		install.ciVals = ciVals;
+	} else {
+		handleMissingCIValues(ciVals);
+	}
 }
 
 function getCIVals() {
-    try {
-        return JSON.parse(nconf.get('ci'));
-    } catch (e) {
-        return undefined;
-    }
+	try {
+		return JSON.parse(nconf.get('ci'));
+	} catch (e) {
+		return undefined;
+	}
 }
 
 function isValidCIVals(ciVals) {
-    return ciVals && ciVals instanceof Object &&
+	return ciVals && ciVals instanceof Object &&
         ciVals.hasOwnProperty('host') &&
         ciVals.hasOwnProperty('port') &&
         ciVals.hasOwnProperty('database');
 }
 
 function handleMissingCIValues(ciVals) {
-    winston.error('[install/checkCIFlag] required values are missing for automated CI integration:');
-    
-    if (!ciVals.hasOwnProperty('host')) {
-        winston.error('  host');
-    }
-    
-    if (!ciVals.hasOwnProperty('port')) {
-        winston.error('  port');
-    }
-    
-    if (!ciVals.hasOwnProperty('database')) {
-        winston.error('  database');
-    }
-    
-    process.exit();
+	winston.error('[install/checkCIFlag] required values are missing for automated CI integration:');
+
+	if (!ciVals.hasOwnProperty('host')) {
+		winston.error('  host');
+	}
+
+	if (!ciVals.hasOwnProperty('port')) {
+		winston.error('  port');
+	}
+
+	if (!ciVals.hasOwnProperty('database')) {
+		winston.error('  database');
+	}
+
+	process.exit();
 }
 
 
