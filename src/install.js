@@ -47,6 +47,7 @@ questions.optional = [
 	},
 ];
 
+// gpt assisted code
 function checkSetupFlagEnv() {
 	let setupVal = install.values;
 	const envConfMap = getEnvConfMap();
