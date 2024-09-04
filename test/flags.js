@@ -1169,35 +1169,37 @@ describe('Flags', () => {
 					assert.strictEqual(statusCode, 200, `${opts.method.toUpperCase()} ${opts.uri} => ${statusCode}`);
 				}
 			});
-			const Flags = require('../src/flags');
-			const posts = require('../src/posts');
-			const user = require('../src/user');
-
-			jest.mock('../src/posts');
-			jest.mock('../src/user');
-
-			describe('Flags.getFlagIdByTarget', () => {
-			it('should call posts.getPostField when type is post', async () => {
-				posts.getPostField.mockResolvedValue('flagId123');
-				
-				const result = await Flags.getFlagIdByTarget('post', 'postId123');
-				
-				expect(posts.getPostField).toHaveBeenCalledWith('postId123', 'flagId');
-				expect(result).toBe('flagId123');
-			});
-
-			it('should call user.getUserField when type is user', async () => {
-				user.getUserField.mockResolvedValue('flagId456');
-				
-				const result = await Flags.getFlagIdByTarget('user', 'userId456');
-				
-				expect(user.getUserField).toHaveBeenCalledWith('userId456', 'flagId');
-				expect(result).toBe('flagId456');
-			});
-
-			it('should throw an error when type is invalid', async () => {
-				await expect(Flags.getFlagIdByTarget('invalidType', 'someId')).rejects.toThrow('[[error:invalid-data]]');
-			});
+			describe('.getFlagIdByTarget()', () => {
+				it('should return the flagId for a post', async () => {
+					// Create a new post
+					const { postData } = await Topics.post({
+						cid: category.cid,
+						uid: uid1,
+						title: utils.generateUUID(),
+						content: utils.generateUUID(),
+					});
+					const postId = postData.pid;
+			
+					const flagId = await Flags.create('post', postId, uid1, 'Test flag');
+					const result = await Flags.getFlagIdByTarget('post', postId);
+					assert.strictEqual(result, flagId.flagId);
+					await Flags.purge([flagId.flagId]); // Cleanup
+				});
+			
+				it('should return the flagId for a user', async () => {
+					const userId = uid1;
+					const flagId = await Flags.create('user', userId, uid1, 'Test flag');
+					const result = await Flags.getFlagIdByTarget('user', userId);
+					assert.strictEqual(result, flagId.flagId);
+					await Flags.purge([flagId.flagId]); // Cleanup
+				});
+			
+				it('should throw an error when type is invalid', async () => {
+					await assert.rejects(
+						Flags.getFlagIdByTarget('invalidType', 'someId'),
+						new Error('[[error:invalid-data]]')
+					);
+				});
 			});
 
 			it('should NOT allow access to privileged endpoints to moderators if the flag target is a post in a cid they DO NOT moderate', async () => {
