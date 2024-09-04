@@ -1169,6 +1169,36 @@ describe('Flags', () => {
 					assert.strictEqual(statusCode, 200, `${opts.method.toUpperCase()} ${opts.uri} => ${statusCode}`);
 				}
 			});
+			const Flags = require('../src/flags');
+			const posts = require('../src/posts');
+			const user = require('../src/user');
+
+			jest.mock('../src/posts');
+			jest.mock('../src/user');
+
+			describe('Flags.getFlagIdByTarget', () => {
+			it('should call posts.getPostField when type is post', async () => {
+				posts.getPostField.mockResolvedValue('flagId123');
+				
+				const result = await Flags.getFlagIdByTarget('post', 'postId123');
+				
+				expect(posts.getPostField).toHaveBeenCalledWith('postId123', 'flagId');
+				expect(result).toBe('flagId123');
+			});
+
+			it('should call user.getUserField when type is user', async () => {
+				user.getUserField.mockResolvedValue('flagId456');
+				
+				const result = await Flags.getFlagIdByTarget('user', 'userId456');
+				
+				expect(user.getUserField).toHaveBeenCalledWith('userId456', 'flagId');
+				expect(result).toBe('flagId456');
+			});
+
+			it('should throw an error when type is invalid', async () => {
+				await expect(Flags.getFlagIdByTarget('invalidType', 'someId')).rejects.toThrow('[[error:invalid-data]]');
+			});
+			});
 
 			it('should NOT allow access to privileged endpoints to moderators if the flag target is a post in a cid they DO NOT moderate', async () => {
 				// This is a new category the user will moderate, but the flagged post is in a different category
