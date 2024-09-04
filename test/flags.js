@@ -1179,13 +1179,13 @@ describe('Flags', () => {
 						content: utils.generateUUID(),
 					});
 					const postId = postData.pid;
-			
+
 					const flagId = await Flags.create('post', postId, uid1, 'Test flag');
 					const result = await Flags.getFlagIdByTarget('post', postId);
 					assert.strictEqual(result, flagId.flagId);
 					await Flags.purge([flagId.flagId]); // Cleanup
 				});
-			
+
 				it('should return the flagId for a user', async () => {
 					const userId = uid1;
 					const flagId = await Flags.create('user', userId, uid1, 'Test flag');
@@ -1193,7 +1193,7 @@ describe('Flags', () => {
 					assert.strictEqual(result, flagId.flagId);
 					await Flags.purge([flagId.flagId]); // Cleanup
 				});
-			
+
 				it('should throw an error when type is invalid', async () => {
 					await assert.rejects(
 						Flags.getFlagIdByTarget('invalidType', 'someId'),
