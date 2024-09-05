@@ -19,7 +19,6 @@ const utils = require('./utils');
 const batch = require('./batch');
 
 const Flags = module.exports;
-
 Flags._states = new Map([
 	['open', {
 		label: '[[flags:state-open]]',
