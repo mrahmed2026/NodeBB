@@ -1169,6 +1169,7 @@ describe('Flags', () => {
 					assert.strictEqual(statusCode, 200, `${opts.method.toUpperCase()} ${opts.uri} => ${statusCode}`);
 				}
 			});
+			// COPILOT ASSISTED CODE
 			describe('.getFlagIdByTarget()', () => {
 				it('should return the flagId for a post', async () => {
 					// Create a new post
@@ -1203,7 +1204,6 @@ describe('Flags', () => {
 			});
 
 			it('should NOT allow access to privileged endpoints to moderators if the flag target is a post in a cid they DO NOT moderate', async () => {
-				// This is a new category the user will moderate, but the flagged post is in a different category
 				const { cid } = await Categories.create({
 					name: utils.generateUUID(),
 				});
